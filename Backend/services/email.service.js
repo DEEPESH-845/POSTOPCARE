@@ -1,66 +1,51 @@
 const nodemailer = require("nodemailer");
 
-class EmailService {
-	constructor() {
-		this.transporter = nodemailer.createTransport({
-			service: "gmail",
-			auth: {
-				user: "ppoudel_be23@thapar.edu",
-				pass: "uodt buei zzhe cvaq",
-			},
-		});
-	}
+// Create transporter
+const createTransporter = () => {
+	return nodemailer.createTransport({
+		host: process.env.SMTP_HOST || "smtp.gmail.com",
+		port: process.env.SMTP_PORT || 587,
+		secure: false, // true for 465, false for other ports
+		auth: {
+			user: process.env.SMTP_USER,
+			pass: process.env.SMTP_PASS,
+		},
+	});
+};
 
-	async sendOTP(email, otpCode) {
+// Send OTP email
+const sendOTPEmail = async (email, otp) => {
+	try {
+		const transporter = createTransporter();
+
 		const mailOptions = {
-			from: "ppoudel_be23@thapar.edu",
-			to: to,
-			subject: "PostOpCare+ - Verification Code",
+			from: `"PostOpCare+" <${process.env.SMTP_USER}>`,
+			to: email,
+			subject: "Your OTP for Account Verification",
 			html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                        <h1 style="color: white; margin: 0;">PostOpCare+</h1>
+                    <h2 style="color: #2563eb;">PostOpCare+ Account Verification</h2>
+                    <p>Hello,</p>
+                    <p>Your OTP for account verification is:</p>
+                    <div style="background: #f3f4f6; padding: 20px; text-align: center; margin: 20px 0;">
+                        <h1 style="color: #2563eb; font-size: 32px; margin: 0; letter-spacing: 5px;">${otp}</h1>
                     </div>
-                    
-                    <div style="padding: 30px; background-color: #f9f9f9;">
-                        <h2 style="color: #333; margin-bottom: 20px;">Verification Code</h2>
-                        
-                        <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
-                            Your verification code is:
-                        </p>
-                        
-                        <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-                            <span style="font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 5px;">
-                                ${otpCode}
-                            </span>
-                        </div>
-                        
-                        <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                            This code will expire in ${
-															process.env.OTP_EXPIRY_MINUTES || 5
-														} minutes.
-                        </p>
-                        
-                        <p style="color: #666; font-size: 14px;">
-                            If you didn't request this code, please ignore this email.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #333; color: white; padding: 20px; text-align: center; font-size: 12px;">
-                        © 2025 PostOpCare+. All rights reserved.
-                    </div>
+                    <p>This OTP will expire in 10 minutes.</p>
+                    <p>If you didn't request this, please ignore this email.</p>
+                    <p>Best regards,<br>PostOpCare+ Team</p>
                 </div>
             `,
 		};
 
-		try {
-			const result = await this.transporter.sendMail(mailOptions);
-			return { success: true, messageId: result.messageId };
-		} catch (error) {
-			console.error("Email sending failed:", error);
-			return { success: false, error: error.message };
-		}
+		const result = await transporter.sendMail(mailOptions);
+		console.log("Email sent successfully:", result.messageId);
+		return result;
+	} catch (error) {
+		console.error("Email sending failed:", error);
+		throw error;
 	}
-}
+};
 
-module.exports = new EmailService();
+module.exports = {
+	sendOTPEmail,
+};
