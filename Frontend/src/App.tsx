@@ -21,7 +21,6 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import { AuthProvider } from "./contexts/AuthContext";
 import VerifyOTP from "./pages/VerifyOTP";
 import SelectPlan from "./pages/SelectPlan";
 import Confirmation from "./pages/Confirmation";
