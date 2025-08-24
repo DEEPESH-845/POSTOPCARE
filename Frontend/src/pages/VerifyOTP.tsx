@@ -24,7 +24,7 @@ const VerifyOTP: React.FC = () => {
 	const navigate = useNavigate();
 
 	const [otp, setOtp] = useState("");
-	const [timer, setTimer] = useState(49); // Start at 49s as shown in design
+	const [timer, setTimer] = useState(49);
 	const [canResend, setCanResend] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,17 +70,24 @@ const VerifyOTP: React.FC = () => {
 		}
 	}, [timer]);
 
+	// Updated handleOTPComplete function with better error handling
 	const handleOTPComplete = async (otpValue: string) => {
+		console.log("OTP Complete called with:", otpValue);
 		setOtp(otpValue);
 		setIsSubmitting(true);
 		setLocalError(null);
 
 		try {
 			const result = await authApiService.verifyOTP(formData.email, otpValue);
+			console.log("Verify OTP result:", result);
 
 			if (result.success) {
-				setCurrentStep(2);
+				console.log("OTP verified successfully, navigating to select-plan");
+				setCurrentStep(3); // Update to step 3 (select plan)
 				navigate("/select-plan");
+			} else {
+				setLocalError("Invalid OTP. Please try again.");
+				setOtp("");
 			}
 		} catch (error: unknown) {
 			console.error("Verify OTP error:", error);
@@ -94,9 +101,16 @@ const VerifyOTP: React.FC = () => {
 		}
 	};
 
+	// Updated manual verify button handler
+	const handleManualVerify = async () => {
+		if (otp.length === 6) {
+			await handleOTPComplete(otp);
+		}
+	};
+
 	const handleResend = async () => {
 		setIsResending(true);
-		setTimer(49); // Reset to 49s
+		setTimer(49);
 		setCanResend(false);
 		setOtp("");
 		setLocalError(null);
@@ -183,43 +197,11 @@ const VerifyOTP: React.FC = () => {
 
 				{/* OTP Input */}
 				<div className="mb-8 flex justify-center">
-					<div className="otp-container">
-						<OTPInput
-							value={otp}
-							length={6}
-							onComplete={isSubmitting ? () => {} : handleOTPComplete}
-						/>
-						<style>{`
-							.otp-container :global(input) {
-								width: 48px !important;
-								height: 48px !important;
-								border: 2px solid #e5e7eb !important;
-								border-radius: 12px !important;
-								font-size: 18px !important;
-								font-weight: 600 !important;
-								text-align: center !important;
-								background: white !important;
-								color: #1f2937 !important;
-								margin: 0 4px !important;
-								transition: all 0.2s ease !important;
-							}
-
-							.otp-container :global(input:focus) {
-								outline: none !important;
-								border-color: #2563eb !important;
-								box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
-							}
-
-							.otp-container :global(input:hover) {
-								border-color: #6b7280 !important;
-							}
-
-							.otp-container :global(input[value]:not([value=""])) {
-								border-color: #2563eb !important;
-								background: #eff6ff !important;
-							}
-						`}</style>
-					</div>
+					<OTPInput
+						value={otp}
+						length={6}
+						onComplete={isSubmitting ? () => {} : handleOTPComplete}
+					/>
 				</div>
 
 				{/* Timer and Resend */}
@@ -250,7 +232,7 @@ const VerifyOTP: React.FC = () => {
 
 				{/* Verify Button */}
 				<Button
-					onClick={() => handleOTPComplete(otp)}
+					onClick={handleManualVerify}
 					disabled={otp.length !== 6 || isSubmitting}
 					className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl mb-6"
 				>

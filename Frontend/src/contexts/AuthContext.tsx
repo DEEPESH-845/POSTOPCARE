@@ -29,7 +29,7 @@ interface AuthContextType {
 	setErrors: (errors: Record<string, string>) => void;
 	isLoading: boolean;
 	setIsLoading: (loading: boolean) => void;
-	// signIn: (email: string, password: string) => Promise<boolean>;
+	signIn: (email: string, password: string) => Promise<boolean>;
 	signUp: (userData: Partial<User & { password: string }>) => Promise<boolean>;
 	verifyOTP: (otp: string) => Promise<boolean>;
 	selectPlan: (plan: PlanType) => void;
@@ -159,30 +159,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		setUser(null);
 	};
 
-	// const signIn = async (email: string, password: string): Promise<boolean> => {
-	// 	setIsLoading(true);
-	// 	setErrors({});
+	const signIn = async (email: string, password: string): Promise<boolean> => {
+		setIsLoading(true);
+		setErrors({});
 
-	// 	// Simulate API call
-	// 	await new Promise((resolve) => setTimeout(resolve, 1000));
+		// Simulate API call
+		await new Promise((resolve) => setTimeout(resolve, 1000));
 
-	// 	const testUser = testUsers.find(
-	// 		(u) => u.email === email && u.password === password
-	// 	);
+		const testUser = testUsers.find(
+			(u) => u.email === email && u.password === password
+		);
 
-	// 	if (testUser) {
-	// 		setUser((prevUser) => ({
-	// 			...prevUser, // ✅ Keeps existing id, language, etc.
-	// 			plan: testUser.plan, // Updates only the plan
-	// 		}));
-	// 		setIsLoading(false);
-	// 		return true;
-	// 	} else {
-	// 		setErrors({ general: "error.invalid" });
-	// 		setIsLoading(false);
-	// 		return false;
-	// 	}
-	// };
+		if (testUser) {
+			setUser((prevUser) => ({
+				...prevUser, // ✅ Keeps existing id, language, etc.
+				plan: testUser.plan, // Updates only the plan
+			}));
+			setIsLoading(false);
+			return true;
+		} else {
+			setErrors({ general: "error.invalid" });
+			setIsLoading(false);
+			return false;
+		}
+	};
 
 	const signUp = async (
 		userData: Partial<User & { password: string }>
@@ -267,6 +267,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		setErrors,
 		isLoading,
 		setIsLoading,
+		signIn,
 		signUp,
 		verifyOTP,
 		selectPlan,
