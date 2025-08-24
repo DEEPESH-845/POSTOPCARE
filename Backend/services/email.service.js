@@ -3,20 +3,18 @@ const nodemailer = require("nodemailer");
 class EmailService {
 	constructor() {
 		this.transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST,
-			port: process.env.SMTP_PORT,
-			secure: false,
+			service: "gmail",
 			auth: {
-				user: process.env.SMTP_USER,
-				pass: process.env.SMTP_PASS,
+				user: "ppoudel_be23@thapar.edu",
+				pass: "uodt buei zzhe cvaq",
 			},
 		});
 	}
 
 	async sendOTP(email, otpCode) {
 		const mailOptions = {
-			from: process.env.FROM_EMAIL,
-			to: email,
+			from: "ppoudel_be23@thapar.edu",
+			to: to,
 			subject: "PostOpCare+ - Verification Code",
 			html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

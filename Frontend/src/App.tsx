@@ -20,6 +20,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import VerifyOTP from "./pages/VerifyOTP";
 import SelectPlan from "./pages/SelectPlan";
 import Confirmation from "./pages/Confirmation";
+import Transcript from "./pages/transcript";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
 							<Route path="/verify-otp" element={<VerifyOTP />} />
 							<Route path="/select-plan" element={<SelectPlan />} />
 							<Route path="/confirmation" element={<Confirmation />} />
+							<Route path="/transcript" element={<Transcript />} />
 							<Route path="/surgery-selection" element={<SurgerySelection />} />
 							<Route path="/recovery-plan" element={<RecoveryPlan />} />
 							<Route path="/daily-checkin" element={<DailyCheckin />} />
