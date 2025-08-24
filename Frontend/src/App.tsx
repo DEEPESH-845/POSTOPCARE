@@ -3,7 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import PublicRoute from "@/components/PublicRoute";
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Onboarding from "./pages/Onboarding";
 import SurgerySelection from "./pages/SurgerySelection";
 import RecoveryPlan from "./pages/RecoveryPlan";
@@ -16,11 +21,10 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import { AuthProvider } from "./contexts/AuthContext";
 import VerifyOTP from "./pages/VerifyOTP";
 import SelectPlan from "./pages/SelectPlan";
 import Confirmation from "./pages/Confirmation";
-import Transcript from "./pages/transcript";
+import Transcript from "./pages/Transcript";
 
 const queryClient = new QueryClient();
 

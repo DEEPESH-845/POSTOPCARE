@@ -1,184 +1,119 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-
-export type PlanType = "free" | "standard" | "premium";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import api from '@/lib/api';
 
 interface User {
-	name: string;
-	email: string;
-	phone?: string;
-	plan: PlanType;
+  id: string;
+  fullname: string;
+  email: string;
+  language: string;
 }
 
 interface AuthContextType {
-	user: User | null;
-	currentStep: number;
-	setCurrentStep: (step: number) => void;
-	formData: Partial<User & { password: string; otp: string }>;
-	setFormData: (
-		data: Partial<User & { password: string; otp: string }>
-	) => void;
-	errors: Record<string, string>;
-	setErrors: (errors: Record<string, string>) => void;
-	isLoading: boolean;
-	setIsLoading: (loading: boolean) => void;
-	signIn: (email: string, password: string) => Promise<boolean>;
-	signUp: (userData: Partial<User & { password: string }>) => Promise<boolean>;
-	verifyOTP: (otp: string) => Promise<boolean>;
-	selectPlan: (plan: PlanType) => void;
-	completeRegistration: () => void;
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (fullname: string, email: string, password: string, language: string) => Promise<void>;
+  logout: () => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-	children,
-}) => {
-	const [user, setUser] = useState<User | null>(null);
-	const [currentStep, setCurrentStep] = useState(0);
-	const [formData, setFormData] = useState<
-		Partial<User & { password: string; otp: string }>
-	>({});
-	const [errors, setErrors] = useState<Record<string, string>>({});
-	const [isLoading, setIsLoading] = useState(false);
-
-	// Test users from requirements
-	const testUsers = [
-		{
-			name: "Riya Sharma",
-			email: "riya@example.com",
-			password: "Riya@1234",
-			plan: "premium" as PlanType,
-		},
-		{
-			name: "Arjun Mehta",
-			email: "arjun@example.com",
-			password: "Arjun@5678",
-			plan: "standard" as PlanType,
-		},
-	];
-
-	const signIn = async (email: string, password: string): Promise<boolean> => {
-		setIsLoading(true);
-		setErrors({});
-
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
-		const testUser = testUsers.find(
-			(u) => u.email === email && u.password === password
-		);
-
-		if (testUser) {
-			setUser({
-				name: testUser.name,
-				email: testUser.email,
-				plan: testUser.plan,
-			});
-			setIsLoading(false);
-			return true;
-		} else {
-			setErrors({ general: "error.invalid" });
-			setIsLoading(false);
-			return false;
-		}
-	};
-
-	const signUp = async (
-		userData: Partial<User & { password: string }>
-	): Promise<boolean> => {
-		setIsLoading(true);
-		setErrors({});
-
-		// Validate password strength
-		if (userData.password && !isPasswordStrong(userData.password)) {
-			setErrors({ password: "error.weak" });
-			setIsLoading(false);
-			return false;
-		}
-
-		// Check for duplicate email
-		if (testUsers.some((u) => u.email === userData.email)) {
-			setErrors({ email: "error.duplicate" });
-			setIsLoading(false);
-			return false;
-		}
-
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
-		setFormData((prev) => ({ ...prev, ...userData }));
-		setIsLoading(false);
-		return true;
-	};
-
-	const verifyOTP = async (otp: string): Promise<boolean> => {
-		setIsLoading(true);
-		setErrors({});
-
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
-		// For demo, accept any 6-digit code
-		if (otp.length === 6 && /^\d+$/.test(otp)) {
-			setFormData((prev) => ({ ...prev, otp }));
-			setIsLoading(false);
-			return true;
-		} else {
-			setErrors({ otp: "error.expired" });
-			setIsLoading(false);
-			return false;
-		}
-	};
-
-	const selectPlan = (plan: PlanType) => {
-		setFormData((prev) => ({ ...prev, plan }));
-	};
-
-	const completeRegistration = () => {
-		const newUser: User = {
-			name: formData.name || "",
-			email: formData.email || "",
-			phone: formData.phone,
-			plan: formData.plan || "free",
-		};
-		setUser(newUser);
-	};
-
-	const isPasswordStrong = (password: string): boolean => {
-		const hasMinLength = password.length >= 8;
-		const hasNumber = /\d/.test(password);
-		const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-		return hasMinLength && hasNumber && hasSpecialChar;
-	};
-
-	return (
-		<AuthContext.Provider
-			value={{
-				user,
-				currentStep,
-				setCurrentStep,
-				formData,
-				setFormData,
-				errors,
-				setErrors,
-				isLoading,
-				setIsLoading,
-				signIn,
-				signUp,
-				verifyOTP,
-				selectPlan,
-				completeRegistration,
-			}}
-		>
-			{children}
-		</AuthContext.Provider>
-	);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
-export const useAuth = () => {
-	const context = useContext(AuthContext);
-	if (!context) {
-		throw new Error("useAuth must be used within an AuthProvider");
-	}
-	return context;
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is logged in on app start
+    const storedToken = localStorage.getItem('authToken');
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await api.post('/user/login', { email, password });
+      const { token: authToken, message } = response.data;
+      
+      // Store token
+      localStorage.setItem('authToken', authToken);
+      setToken(authToken);
+      
+      // For now, we'll create a user object from the email
+      // In a real app, you'd want the backend to return user info
+      const userData = { id: '1', fullname: email.split('@')[0], email, language: 'english' };
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Login failed';
+      throw new Error(message);
+    }
+  };
+
+  const register = async (fullname: string, email: string, password: string, language: string) => {
+    try {
+      const response = await api.post('/user/register', {
+        fullname,
+        email,
+        password,
+        language
+      });
+      
+      const { token: authToken, message } = response.data;
+      
+      // Store token
+      localStorage.setItem('authToken', authToken);
+      setToken(authToken);
+      
+      // Create user object
+      const userData = { id: '1', fullname, email, language };
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Registration failed';
+      throw new Error(message);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+  };
+
+  const value = {
+    user,
+    token,
+    login,
+    register,
+    logout,
+    loading,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

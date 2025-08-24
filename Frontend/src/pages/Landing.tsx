@@ -8,13 +8,70 @@ import {
 	Smartphone,
 	MessageCircle,
 	Camera,
+	User,
+	LogIn,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import DemoScript from "@/components/DemoScript";
 
 const Landing = () => {
+	const { user } = useAuth();
+	const navigate = useNavigate();
+
+	const handleGetStarted = () => {
+		if (user) {
+			navigate('/recovery-plan');
+		} else {
+			navigate('/register');
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-background">
+			{/* Navigation Bar */}
+			<nav className="bg-white/95 backdrop-blur-sm border-b sticky top-0 z-50">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div className="flex justify-between items-center h-16">
+						<div className="flex items-center">
+							<div className="flex-shrink-0 flex items-center">
+								<Heart className="h-8 w-8 text-blue-600" />
+								<span className="ml-2 text-xl font-bold text-gray-900">PostOpCare</span>
+							</div>
+						</div>
+						<div className="hidden md:block">
+							<div className="ml-10 flex items-baseline space-x-4">
+								{user ? (
+									<>
+										<span className="text-gray-700">Welcome, {user.fullname}!</span>
+										<Link to="/profile">
+											<Button variant="outline" size="sm">
+												<User className="mr-2 h-4 w-4" />
+												Profile
+											</Button>
+										</Link>
+									</>
+								) : (
+									<div className="space-x-2">
+										<Link to="/login">
+											<Button variant="ghost" size="sm">
+												<LogIn className="mr-2 h-4 w-4" />
+												Sign In
+											</Button>
+										</Link>
+										<Link to="/register">
+											<Button size="sm">
+												Get Started
+											</Button>
+										</Link>
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
+			</nav>
+
 			{/* Hero Section */}
 			<div className="gradient-hero px-4 py-16 text-center relative overflow-hidden">
 				<div className="max-w-4xl mx-auto relative z-10">
@@ -35,16 +92,15 @@ const Landing = () => {
 					</p>
 
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-						<Link to="/onboarding">
-							<Button
-								variant="hero"
-								size="lg"
-								className="w-full transition-transform duration-300 sm:w-auto text-lg"
-							>
-								Start my recovery plan
-								<ArrowRight className="ml-2 h-5 w-5" />
-							</Button>
-						</Link>
+						<Button
+							onClick={handleGetStarted}
+							variant="hero"
+							size="lg"
+							className="w-full transition-transform duration-300 sm:w-auto text-lg"
+						>
+							{user ? 'Continue recovery plan' : 'Start my recovery plan'}
+							<ArrowRight className="ml-2 h-5 w-5" />
+						</Button>
 						<Button
 							variant="ghost-light"
 							size="lg"
@@ -151,16 +207,15 @@ const Landing = () => {
 						with PostOpCare+
 					</p>
 
-					<Link to="/onboarding">
-						<Button
-							variant="primary"
-							size="lg"
-							className="text-lg transition-transform duration-300 hover:scale-105"
-						>
-							Start my recovery plan
-							<ArrowRight className="ml-2 h-5 w-5" />
-						</Button>
-					</Link>
+					<Button
+						onClick={handleGetStarted}
+						variant="primary"
+						size="lg"
+						className="text-lg transition-transform duration-300 hover:scale-105"
+					>
+						{user ? 'Continue recovery plan' : 'Start my recovery plan'}
+						<ArrowRight className="ml-2 h-5 w-5" />
+					</Button>
 				</div>
 			</div>
 

@@ -17,10 +17,10 @@ const authRoutes = require("./routes/auth.routes.js");
 //     next();
 // });
 
-// app.use(cors({
-//   origin: "http://localhost:5173",
-//   credentials: true,
-// }));
+app.use(cors({
+  origin: "http://localhost:8080",
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(logger("dev"));

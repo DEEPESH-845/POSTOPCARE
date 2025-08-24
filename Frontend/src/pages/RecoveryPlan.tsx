@@ -1,69 +1,136 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, CheckCircle, Clock, ArrowRight, AlertTriangle, Thermometer } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calendar, CheckCircle, Clock, ArrowRight, AlertTriangle, Thermometer, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import api from "@/lib/api";
 
-const timelineData = [
-  {
-    day: 1,
-    title: "Surgery Day",
-    status: "completed",
-    description: "Rest and initial recovery",
-    activities: ["Pain management", "Basic mobility", "Initial assessment"]
-  },
-  {
-    day: 2,
-    title: "Early Recovery",
-    status: "completed", 
-    description: "Gentle movement begins",
-    activities: ["Physical therapy assessment", "Walking with assistance", "Wound care"]
-  },
-  {
-    day: 3,
-    title: "Mobility Building",
-    status: "completed",
-    description: "Increased movement and strength",
-    activities: ["Short walks", "Range of motion exercises", "Pain tracking"]
-  },
-  {
-    day: 4,
-    title: "Independence",
-    status: "completed",
-    description: "Building self-sufficiency",
-    activities: ["Longer walks", "Stair climbing practice", "Home exercises"]
-  },
-  {
-    day: 5,
-    title: "Current Progress",
-    status: "current",
-    description: "Monitoring and assessment",
-    activities: ["Daily check-in due", "Photo documentation", "Symptom tracking"],
-    alert: true
-  },
-  {
-    day: 6,
-    title: "Continued Recovery",
-    status: "upcoming",
-    description: "Building endurance",
-    activities: ["Extended exercises", "Strength building", "Flexibility work"]
-  },
-  {
-    day: 7,
-    title: "Week 1 Complete",
-    status: "upcoming",
-    description: "First milestone reached",
-    activities: ["Progress assessment", "Exercise plan update", "Goal setting"]
-  }
-];
+interface TimelineItem {
+  dayNumber: number;
+  title: string;
+  description: string;
+  activities: string[];
+  status: 'completed' | 'current' | 'upcoming';
+}
+
+interface RecoveryData {
+  title: string;
+  surgeryType?: string;
+  specificProcedure?: string;
+  progress: {
+    overallProgress: number;
+    daysCompleted: number;
+    currentDay: number;
+    daysRemaining: number;
+  };
+  timeline: TimelineItem[];
+}
 
 const RecoveryPlan = () => {
-  const currentDay = 5;
-  const totalDays = 42; // 6 weeks
-  const progressPercentage = (currentDay / totalDays) * 100;
-  
-  const currentDayData = timelineData.find(d => d.day === currentDay);
+  const [recoveryData, setRecoveryData] = useState<RecoveryData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+  const [canCheckIn, setCanCheckIn] = useState(true);
+  const navigate = useNavigate();
+  const { recoveryId } = useParams<{ recoveryId?: string }>();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchRecoveryPlan();
+    checkDailyCheckInStatus();
+  }, []);
+
+  const fetchRecoveryPlan = async () => {
+    try {
+      // Check if recoveryId is provided in the URL parameter
+      let surgeryId = recoveryId;
+      
+      // If no URL parameter, try to get from localStorage (backward compatibility)
+      if (!surgeryId) {
+        surgeryId = localStorage.getItem('currentSurgeryId');
+      }
+      
+      if (!surgeryId) {
+        toast({
+          title: "No Recovery Plan Found",
+          description: "Please complete the surgery selection to create your recovery plan.",
+          variant: "destructive",
+        });
+        navigate('/surgery-selection');
+        return;
+      }
+
+      const response = await api.get(`/recovery/plan/${surgeryId}`);
+      setRecoveryData(response.data.recoveryJourney);
+    } catch (error: any) {
+      console.error('Error fetching recovery plan:', error);
+      setError(error.response?.data?.message || 'Failed to load recovery plan');
+      toast({
+        title: "Error Loading Recovery Plan",
+        description: "Please try again or create a new recovery plan.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkDailyCheckInStatus = () => {
+    // Check if user has already done daily check-in today
+    const lastCheckIn = localStorage.getItem('lastDailyCheckIn');
+    const today = new Date().toDateString();
+    
+    if (lastCheckIn === today) {
+      setCanCheckIn(false);
+    }
+  };
+
+  const handleDailyCheckIn = () => {
+    if (!canCheckIn) {
+      toast({
+        title: "Already Completed",
+        description: "You've already completed your daily check-in today. Please come back tomorrow.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    navigate('/daily-checkin');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your recovery plan...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !recoveryData) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="text-center p-8">
+            <AlertTriangle className="h-12 w-12 text-alert mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-foreground mb-2">Unable to Load Recovery Plan</h2>
+            <p className="text-muted-foreground mb-4">
+              {error || "There was an issue loading your recovery plan."}
+            </p>
+            <Button onClick={() => navigate('/surgery-selection')} variant="primary">
+              Create Recovery Plan
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const currentDayData = recoveryData.timeline.find(d => d.status === 'current');
 
   return (
     <div className="min-h-screen bg-gradient-subtle px-4 py-8">
@@ -74,7 +141,7 @@ const RecoveryPlan = () => {
             Your Recovery Journey
           </h1>
           <p className="text-muted-foreground">
-            Knee Replacement Recovery • Day {currentDay} of {totalDays}
+            {recoveryData.title}
           </p>
         </div>
 
@@ -91,25 +158,25 @@ const RecoveryPlan = () => {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-muted-foreground">Overall Progress</span>
-                  <span className="font-medium">{Math.round(progressPercentage)}%</span>
+                  <span className="font-medium">{Math.round(recoveryData.progress.overallProgress)}%</span>
                 </div>
                 <Progress 
-                  value={progressPercentage} 
+                  value={recoveryData.progress.overallProgress} 
                   className="h-3"
                 />
               </div>
               
               <div className="grid md:grid-cols-3 gap-4 mt-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-success mb-1">{currentDay - 1}</div>
+                  <div className="text-2xl font-bold text-success mb-1">{recoveryData.progress.daysCompleted}</div>
                   <div className="text-sm text-muted-foreground">Days Completed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">1</div>
+                  <div className="text-2xl font-bold text-primary mb-1">{recoveryData.progress.currentDay}</div>
                   <div className="text-sm text-muted-foreground">Current Day</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-muted-foreground mb-1">{totalDays - currentDay}</div>
+                  <div className="text-2xl font-bold text-muted-foreground mb-1">{recoveryData.progress.daysRemaining}</div>
                   <div className="text-sm text-muted-foreground">Days Remaining</div>
                 </div>
               </div>
@@ -117,15 +184,15 @@ const RecoveryPlan = () => {
           </CardContent>
         </Card>
 
-        {/* Digital Twin Visualization */}
+        {/* Recovery Timeline */}
         <Card className="mb-8 shadow-card">
           <CardHeader>
             <CardTitle>Recovery Timeline</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {timelineData.map((day, index) => (
-                <div key={day.day} className="flex items-start space-x-4">
+              {recoveryData.timeline.map((day, index) => (
+                <div key={day.dayNumber} className="flex items-start space-x-4">
                   {/* Timeline dot */}
                   <div className="flex flex-col items-center">
                     <div className={`w-4 h-4 rounded-full border-2 ${
@@ -137,7 +204,7 @@ const RecoveryPlan = () => {
                         <CheckCircle className="w-3 h-3 text-white -m-0.5" />
                       )}
                     </div>
-                    {index < timelineData.length - 1 && (
+                    {index < recoveryData.timeline.length - 1 && (
                       <div className={`w-0.5 h-8 mt-2 ${
                         day.status === 'completed' ? 'bg-success' : 'bg-muted'
                       }`} />
@@ -150,15 +217,15 @@ const RecoveryPlan = () => {
                   }`}>
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="font-semibold text-foreground">
-                        Day {day.day}: {day.title}
+                        Day {day.dayNumber}: {day.title}
                       </span>
-                      {day.alert && (
-                        <AlertTriangle className="w-4 h-4 text-alert" />
-                      )}
                       {day.status === 'current' && (
-                        <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
-                          Current
-                        </span>
+                        <>
+                          <AlertTriangle className="w-4 h-4 text-alert" />
+                          <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
+                            Current
+                          </span>
+                        </>
                       )}
                     </div>
                     
@@ -207,12 +274,31 @@ const RecoveryPlan = () => {
                 </p>
               </div>
               
-              <Link to="/daily-checkin">
-                <Button variant="primary" size="lg" className="w-full">
-                  Start Daily Check-in
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleDailyCheckIn}
+                variant="primary" 
+                size="lg" 
+                className="w-full"
+                disabled={!canCheckIn}
+              >
+                {canCheckIn ? (
+                  <>
+                    Start Daily Check-in
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Daily Check-in Completed
+                  </>
+                )}
+              </Button>
+              
+              {!canCheckIn && (
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                  Come back tomorrow for your next check-in
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
