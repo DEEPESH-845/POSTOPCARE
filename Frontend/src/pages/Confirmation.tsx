@@ -55,9 +55,9 @@ const Confirmation: React.FC = () => {
 						{t("confirmation.subtitle")}
 					</p>
 
-					{formData.name && (
+					{formData.fullname && (
 						<p className="text-lg font-medium text-primary">
-							Welcome, {formData.name}! 🎉
+							Welcome, {formData.fullname}! 🎉
 						</p>
 					)}
 				</div>

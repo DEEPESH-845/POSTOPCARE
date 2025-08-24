@@ -12,8 +12,9 @@ import { ArrowLeft, Eye, EyeOff, User, Mail, Phone, Lock } from "lucide-react";
 
 const SignUp: React.FC = () => {
 	const { t } = useLanguage();
-	const { signUp, errors, isLoading, setCurrentStep } = useAuth();
+	const { signUp, errors, setCurrentStep } = useAuth();
 	const navigate = useNavigate();
+	const [isLoading, setIsLoading] = useState(false);
 
 	const [formData, setFormData] = useState({
 		name: "",

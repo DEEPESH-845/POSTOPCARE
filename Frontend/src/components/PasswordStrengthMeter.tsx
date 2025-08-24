@@ -26,18 +26,18 @@ const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
 			return {
 				strength: "weak",
 				width: "33%",
-				color: "password-strength-weak",
+				color: "bg-red-500",
 			};
 		if (score <= 4)
 			return {
 				strength: "medium",
 				width: "66%",
-				color: "password-strength-medium",
+				color: "bg-yellow-500",
 			};
 		return {
 			strength: "strong",
 			width: "100%",
-			color: "password-strength-strong",
+			color: "bg-green-500",
 		};
 	};
 
@@ -63,7 +63,7 @@ const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
 			</div>
 			<div className="h-1 bg-muted rounded-full overflow-hidden">
 				<div
-					className={`${color} transition-all duration-300 ease-out`}
+					className={`h-full ${color} transition-all duration-300 ease-out`}
 					style={{ width }}
 				/>
 			</div>

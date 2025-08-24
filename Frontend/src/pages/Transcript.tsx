@@ -89,62 +89,6 @@ const Transcript: React.FC = () => {
 		},
 	};
 
-	// Handle file drag and drop
-	const onDragEnter = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsDragActive(true);
-	}, []);
-
-	const onDragLeave = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsDragActive(false);
-	}, []);
-
-	const onDragOver = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-	}, []);
-
-	const onDrop = useCallback(
-		(e: React.DragEvent) => {
-			e.preventDefault();
-			e.stopPropagation();
-			setIsDragActive(false);
-
-			const files = Array.from(e.dataTransfer.files);
-			handleFileUpload(files);
-		},
-		[selectedFileType]
-	);
-
-	// Handle file selection
-	const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const files = Array.from(e.target.files || []);
-		handleFileUpload(files);
-	};
-
-	// Validate file
-	const validateFile = (file: File): string | null => {
-		const maxSize = 10 * 1024 * 1024; // 10MB
-		const config = fileTypeConfig[selectedFileType];
-		const allowedTypes = config.acceptedTypes
-			.split(",")
-			.map((type) => type.trim());
-
-		if (file.size > maxSize) {
-			return "File size must be less than 10MB";
-		}
-
-		const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
-		if (!allowedTypes.includes(fileExtension)) {
-			return `Invalid file type. Allowed types: ${config.acceptedTypes}`;
-		}
-
-		return null;
-	};
-
 	// Handle file upload
 	const handleFileUpload = async (files: File[]) => {
 		setError(null);
@@ -186,6 +130,62 @@ const Transcript: React.FC = () => {
 			// Simulate upload progress
 			await simulateUpload(fileId);
 		}
+	};
+
+	// Handle file drag and drop
+	const onDragEnter = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragActive(true);
+	}, []);
+
+	const onDragLeave = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragActive(false);
+	}, []);
+
+	const onDragOver = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+	}, []);
+
+	const onDrop = useCallback(
+		(e: React.DragEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			setIsDragActive(false);
+
+			const files = Array.from(e.dataTransfer.files);
+			handleFileUpload(files);
+		},
+		[selectedFileType, handleFileUpload]
+	);
+
+	// Handle file selection
+	const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const files = Array.from(e.target.files || []);
+		handleFileUpload(files);
+	};
+
+	// Validate file
+	const validateFile = (file: File): string | null => {
+		const maxSize = 10 * 1024 * 1024; // 10MB
+		const config = fileTypeConfig[selectedFileType];
+		const allowedTypes = config.acceptedTypes
+			.split(",")
+			.map((type) => type.trim());
+
+		if (file.size > maxSize) {
+			return "File size must be less than 10MB";
+		}
+
+		const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
+		if (!allowedTypes.includes(fileExtension)) {
+			return `Invalid file type. Allowed types: ${config.acceptedTypes}`;
+		}
+
+		return null;
 	};
 
 	// Simulate file upload progress
@@ -230,9 +230,6 @@ const Transcript: React.FC = () => {
 		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 	};
 
-	const { errors, isLoading, formData, setCurrentStep, setFormData } =
-		useAuth();
-
 	// Handle form submission
 	const handleSubmit = async () => {
 		try {
@@ -241,6 +238,7 @@ const Transcript: React.FC = () => {
 				return;
 			}
 
+			setIsUploading(true);
 			// Show loading toast
 			toast({
 				title: "Uploading documents...",
@@ -264,20 +262,19 @@ const Transcript: React.FC = () => {
 				)
 			);
 
-			// Then update user with file URLs/IDs
-			setFormData({
-				...formData,
-				transcripts: uploadedFiles.map((f) => ({
-					name: f.file.name,
-					type: f.type,
-					size: f.file.size,
-				})),
-				additionalNotes: notes,
-			} as typeof formData & {
-				transcripts: Array<{ name: string; type: string; size: number }>;
-				additionalNotes: string;
-			});
+			// Process files for storage
+			const processedFiles = uploadedFiles.map((f) => ({
+				name: f.file.name,
+				type: f.type,
+				size: f.file.size,
+				id: f.id,
+				uploadedAt: new Date().toISOString(),
+			}));
 
+			// Store in localStorage for later retrieval during registration
+			localStorage.setItem("medicalDocuments", JSON.stringify(processedFiles));
+			localStorage.setItem("additionalNotes", notes);
+			setIsUploading(false);
 			// Show success toast
 			toast({
 				title: "Documents uploaded successfully! ✅",
@@ -285,20 +282,21 @@ const Transcript: React.FC = () => {
 				variant: "default",
 			});
 
-			setCurrentStep(4); // Adjust step number as needed
-
 			// Small delay for better UX (optional)
 			setTimeout(() => {
 				navigate("/recovery-plan");
 			}, 1000);
 		} catch (error) {
 			console.error("Upload failed:", error);
+			toast({
+				title: "Upload failed",
+				description: "Please try again.",
+				variant: "destructive",
+			});
 		}
 	};
-	// ...existing code...
 
 	const handleBack = () => {
-		setCurrentStep(1); // ✅ Pass the step number directly
 		navigate("/surgery-selection");
 	};
 

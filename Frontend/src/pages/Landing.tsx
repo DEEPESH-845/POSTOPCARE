@@ -21,9 +21,9 @@ const Landing = () => {
 
 	const handleGetStarted = () => {
 		if (user) {
-			navigate('/recovery-plan');
+			navigate("/recovery-plan");
 		} else {
-			navigate('/register');
+			navigate("/register");
 		}
 	};
 
@@ -36,14 +36,18 @@ const Landing = () => {
 						<div className="flex items-center">
 							<div className="flex-shrink-0 flex items-center">
 								<Heart className="h-8 w-8 text-blue-600" />
-								<span className="ml-2 text-xl font-bold text-gray-900">PostOpCare</span>
+								<span className="ml-2 text-xl font-bold text-gray-900">
+									PostOpCare
+								</span>
 							</div>
 						</div>
 						<div className="hidden md:block">
 							<div className="ml-10 flex items-baseline space-x-4">
 								{user ? (
 									<>
-										<span className="text-gray-700">Welcome, {user.fullname}!</span>
+										<span className="text-gray-700">
+											Welcome, {user.fullname}!
+										</span>
 										<Link to="/profile">
 											<Button variant="outline" size="sm">
 												<User className="mr-2 h-4 w-4" />
@@ -53,16 +57,14 @@ const Landing = () => {
 									</>
 								) : (
 									<div className="space-x-2">
-										<Link to="/login">
+										<Link to="/signin">
 											<Button variant="ghost" size="sm">
 												<LogIn className="mr-2 h-4 w-4" />
 												Sign In
 											</Button>
 										</Link>
-										<Link to="/register">
-											<Button size="sm">
-												Get Started
-											</Button>
+										<Link to="/signup">
+											<Button size="sm">Get Started</Button>
 										</Link>
 									</div>
 								)}
@@ -98,7 +100,7 @@ const Landing = () => {
 							size="lg"
 							className="w-full transition-transform duration-300 sm:w-auto text-lg"
 						>
-							{user ? 'Continue recovery plan' : 'Start my recovery plan'}
+							{user ? "Continue recovery plan" : "Start my recovery plan"}
 							<ArrowRight className="ml-2 h-5 w-5" />
 						</Button>
 						<Button
@@ -213,7 +215,7 @@ const Landing = () => {
 						size="lg"
 						className="text-lg transition-transform duration-300 hover:scale-105"
 					>
-						{user ? 'Continue recovery plan' : 'Start my recovery plan'}
+						{user ? "Continue recovery plan" : "Start my recovery plan"}
 						<ArrowRight className="ml-2 h-5 w-5" />
 					</Button>
 				</div>
