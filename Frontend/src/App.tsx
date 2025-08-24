@@ -18,6 +18,13 @@ import AlertModal from "./pages/AlertModal";
 import ClinicianDashboard from "./pages/ClinicianDashboard";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import VerifyOTP from "./pages/VerifyOTP";
+import SelectPlan from "./pages/SelectPlan";
+import Confirmation from "./pages/Confirmation";
 
 const queryClient = new QueryClient();
 

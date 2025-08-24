@@ -1,8 +1,20 @@
-const http = require('http');
-const app = require('./app');
+const http = require("http");
+const app = require("./app");
+const { initializeDatabase } = require("./db/init");
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 
-server.listen(port,()=>{
-    console.log('Server is running on port: '+port);
-});
+const PORT = process.env.PORT || 3000;
+
+async function startServer() {
+	try {
+		await initializeDatabase();
+		app.listen(PORT, () => {
+			console.log(`Server running on port ${PORT}`);
+		});
+	} catch (error) {
+		console.error("Server startup error:", error);
+	}
+}
+
+startServer();
