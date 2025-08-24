@@ -10,7 +10,7 @@ const patientAlerts = [
     id: 1,
     name: "Neha Patel",
     age: 35,
-    surgery: "Knee Replacement",
+    surgery: "Hand Surgery",
     day: 5,
     priority: "high",
     timestamp: "10 minutes ago",
@@ -210,24 +210,15 @@ const ClinicianDashboard = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="relative">
                         <img 
-                          src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=200&fit=crop"
+                          src="/arm_injured.jpg"
                           alt="Wound photo 1"
-                          className="w-full h-32 object-cover rounded-lg"
+                          className="w-full h-32 object-contain rounded-lg"
                         />
                         <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
                           10 min ago
                         </div>
                       </div>
-                      <div className="relative">
-                        <img 
-                          src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=300&h=200&fit=crop"
-                          alt="Wound photo 2"
-                          className="w-full h-32 object-cover rounded-lg"
-                        />
-                        <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                          10 min ago
-                        </div>
-                      </div>
+                     
                     </div>
                     
                     <div className="mt-4 bg-alert-soft border border-alert/20 rounded-lg p-3">

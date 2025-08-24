@@ -1,7 +1,10 @@
 const userModel = require("../models/user.model")
 const NotificationPreference = require("../models/notificationPreference.model");
+const RecoveryPlan = require("../models/recoveryPlan.model");
+const SurgeryOnboarding = require("../models/surgeryOnboarding.model");
 const { validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path"); // To ensure correct file path handling
 const crypto = require("crypto");
@@ -137,6 +140,115 @@ module.exports.updateNotificationPreferences = async (req, res) => {
         });
     } catch (error) {
         console.error("Error updating notification preferences:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+module.exports.getUserRecoveryPlans = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Find all recovery plans for the user with populated surgery details
+        const recoveryPlans = await RecoveryPlan.find({ userId })
+            .populate({
+                path: 'surgeryId',
+                select: 'surgery createdAt',
+                model: 'SurgeryOnboarding'
+            })
+            .sort({ createdAt: -1 });
+
+        // Format the response data
+        const formattedPlans = recoveryPlans.map(plan => ({
+            _id: plan._id,
+            surgeryType: plan.surgeryType,
+            specificProcedure: plan.surgeryId?.surgery?.specificProcedure || 'Unknown',
+            category: plan.surgeryId?.surgery?.category || 'Unknown',
+            surgeryDate: plan.surgeryId?.surgery?.surgeryDate,
+            progress: {
+                overallProgress: plan.overallProgress,
+                currentDay: plan.currentDay,
+                totalDays: plan.totalDays,
+                daysCompleted: plan.daysCompleted,
+                daysRemaining: plan.totalDays - plan.currentDay + 1
+            },
+            startDate: plan.startDate,
+            estimatedEndDate: plan.estimatedEndDate,
+            isActive: plan.currentDay <= plan.totalDays,
+            createdAt: plan.createdAt
+        }));
+
+        res.status(200).json({
+            message: "Recovery plans retrieved successfully",
+            data: formattedPlans,
+            count: formattedPlans.length
+        });
+    } catch (error) {
+        console.error("Error getting user recovery plans:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+module.exports.getUserProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Get user basic info
+        const user = await userModel.findById(userId).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Get recovery plans count
+        const recoveryPlansCount = await RecoveryPlan.countDocuments({ userId });
+        
+        // Get current active recovery plan
+        const activeRecoveryPlan = await RecoveryPlan.findOne({ 
+            userId,
+            $expr: { $lte: ["$currentDay", "$totalDays"] }
+        })
+        .populate({
+            path: 'surgeryId',
+            select: 'surgery',
+            model: 'SurgeryOnboarding'
+        })
+        .sort({ createdAt: -1 });
+
+        // Calculate next check-in time (assuming daily check-ins)
+        let nextCheckIn = null;
+        if (activeRecoveryPlan) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(20, 0, 0, 0); // 8:00 PM next day
+            nextCheckIn = tomorrow;
+        }
+
+        const profileData = {
+            user: {
+                _id: user._id,
+                fullname: user.fullname,
+                email: user.email,
+                language: user.language,
+                createdAt: user.createdAt
+            },
+            recovery: {
+                hasActivePlans: recoveryPlansCount > 0,
+                totalPlans: recoveryPlansCount,
+                currentPlan: activeRecoveryPlan ? {
+                    surgeryType: activeRecoveryPlan.surgeryType,
+                    currentDay: activeRecoveryPlan.currentDay,
+                    totalDays: activeRecoveryPlan.totalDays,
+                    progress: activeRecoveryPlan.overallProgress
+                } : null,
+                nextCheckIn: nextCheckIn
+            }
+        };
+
+        res.status(200).json({
+            message: "Profile retrieved successfully",
+            data: profileData
+        });
+    } catch (error) {
+        console.error("Error getting user profile:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }

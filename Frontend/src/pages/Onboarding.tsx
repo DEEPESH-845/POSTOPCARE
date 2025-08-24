@@ -1,18 +1,19 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Globe, ArrowRight, Shield, Heart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const languages = [
-  { code: 'en', name: 'English', native: 'English' },
-  { code: 'hi', name: 'Hindi', native: 'हिंदी' },
-  { code: 'ta', name: 'Tamil', native: 'தமிழ்' }
+  { code: 'english', name: 'English', native: 'English' },
+  { code: 'hindi', name: 'Hindi', native: 'हिंदी' },
+  { code: 'tamil', name: 'Tamil', native: 'தமிழ்' }
 ];
 
 const translations = {
-  en: {
+  english: {
     title: "Welcome to PostOpCare+",
     subtitle: "Let's set up your personalized recovery plan",
     languageLabel: "Choose your preferred language",
@@ -28,7 +29,7 @@ const translations = {
     continueButton: "Continue to surgery selection",
     trustBadge: "HIPAA Compliant & Secure"
   },
-  hi: {
+  hindi: {
     title: "PostOpCare+ में आपका स्वागत है",
     subtitle: "आइए आपकी व्यक्तिगत रिकवरी योजना तैयार करें",
     languageLabel: "अपनी पसंदीदा भाषा चुनें",
@@ -44,7 +45,7 @@ const translations = {
     continueButton: "सर्जरी चयन जारी रखें",
     trustBadge: "HIPAA अनुपालित और सुरक्षित"
   },
-  ta: {
+  tamil: {
     title: "PostOpCare+ இல் உங்களை வரவேற்கிறோம்",
     subtitle: "உங்கள் தனிப்பயன் மீட்புத் திட்டத்தை அமைப்போம்",
     languageLabel: "உங்கள் விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்",
@@ -63,10 +64,41 @@ const translations = {
 };
 
 const Onboarding = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage, setSelectedLanguage] = useState('english');
   const [consentGiven, setConsentGiven] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const t = translations[selectedLanguage as keyof typeof translations];
+
+  const handleContinue = async () => {
+    if (!consentGiven) {
+      toast({
+        title: "Consent Required",
+        description: "Please agree to the privacy policy and terms of service to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    // Store preferences locally for the surgery selection page
+    localStorage.setItem('onboardingData', JSON.stringify({
+      preferredLanguage: selectedLanguage,
+      privacyPermission: consentGiven
+    }));
+
+    toast({
+      title: "Preferences Saved",
+      description: "Your language and consent preferences have been saved.",
+    });
+
+    // Navigate to surgery selection
+    navigate('/surgery-selection');
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle px-4 py-8">
@@ -160,17 +192,25 @@ const Onboarding = () => {
         </div>
 
         {/* Continue Button */}
-        <Link to="/surgery-selection">
-          <Button 
-            variant="primary" 
-            size="lg" 
-            className="w-full"
-            disabled={!consentGiven}
-          >
-            {t.continueButton}
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </Link>
+        <Button 
+          onClick={handleContinue}
+          variant="primary" 
+          size="lg" 
+          className="w-full"
+          disabled={!consentGiven || loading}
+        >
+          {loading ? (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Saving preferences...
+            </div>
+          ) : (
+            <>
+              {t.continueButton}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
